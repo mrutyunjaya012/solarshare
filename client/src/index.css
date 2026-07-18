@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { @apply border-slate-200; }
+  html { @apply bg-slate-50; }
+  body { @apply min-w-[320px] bg-slate-50 font-body text-slate-900 antialiased; }
+  h1, h2, h3, h4 { @apply font-heading; }
+  button, input, select { @apply focus:outline-none; }
+}
+
+@layer components {
+  .panel { @apply rounded-2xl border border-slate-200 bg-white shadow-soft; }
+  .page-title { @apply font-heading text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]; }
+  .page-subtitle { @apply mt-1 text-sm leading-6 text-slate-500; }
+  .eyebrow { @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400; }
+  .btn-primary { @apply inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60; }
+  .btn-secondary { @apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus:ring-4 focus:ring-slate-100; }
+  .input-field { @apply mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-green-50; }
+  .field-label { @apply text-sm font-medium text-slate-700; }
+  .table-shell { @apply overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-soft; }
+  .table-header { @apply border-b border-slate-100 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500; }
+  .status-pill { @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold; }
+}
