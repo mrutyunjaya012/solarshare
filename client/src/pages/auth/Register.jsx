@@ -1,41 +1,329 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Building2, Leaf, ShieldCheck, Sun, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sun, Zap, Shield, User, Building2, Lock, Eye, EyeOff } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 
 const roleHome = { prosumer: "/prosumer", consumer: "/consumer", admin: "/admin" };
+
 const ROLES = [
-  { value: "prosumer", label: "Solar producer", desc: "I want to sell surplus solar energy.", icon: Sun },
-  { value: "consumer", label: "Energy consumer", desc: "I want to buy clean energy nearby.", icon: Leaf },
-  { value: "admin", label: "Grid administrator", desc: "I manage the SolarShare platform.", icon: ShieldCheck },
+  {
+    value: "prosumer",
+    label: "Prosumer",
+    desc: "I have solar panels and want to sell surplus energy",
+    icon: Sun,
+  },
+  {
+    value: "consumer",
+    label: "Consumer",
+    desc: "I want to buy solar energy from nearby prosumers",
+    icon: Zap,
+  },
+  {
+    value: "admin",
+    label: "Grid Admin",
+    desc: "I manage the energy grid and platform operations",
+    icon: Shield,
+  },
 ];
 
-const Register = () => {
+export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "", city: "", capacityKw: "3", adminCode: "" });
+
+  const [step, setStep] = useState(1); // 1 = role picker, 2 = details form
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "",
+    city: "",
+    capacityKw: "3",
+    adminCode: "",
+  });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const handleRoleSelect = (value) => {
+    setForm((f) => ({ ...f, role: value }));
+    setError("");
+  };
+
+  const handleContinue = () => {
+    if (!form.role) return setError("Please select a role to continue.");
+    setError("");
+    setStep(2);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!form.role) return setError("Please choose how you will use SolarShare.");
     setError("");
     setSubmitting(true);
     try {
       const user = await register(form);
       navigate(roleHome[user.role] || "/");
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed");
+      setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-slate-50 px-5 py-8 sm:px-8 lg:py-12"><div className="mx-auto max-w-5xl"><Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"><ArrowLeft size={16} /> Back to home</Link><div className="mt-7 grid overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] lg:grid-cols-[0.78fr_1.22fr]"><section className="bg-slate-900 p-7 text-white sm:p-10"><Link to="/" className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-primary text-lg font-bold">S</span><span><span className="block font-heading text-lg font-semibold">SolarShare</span><span className="block text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400">Energy exchange</span></span></Link><div className="mt-12"><p className="text-xs font-semibold uppercase tracking-[0.15em] text-green-300">Create your account</p><h1 className="mt-3 font-heading text-3xl font-semibold leading-tight">Bring your community into the clean-energy future.</h1><p className="mt-5 text-sm leading-6 text-slate-300">Choose your role now. You will get a workspace built around selling, buying, or managing local solar energy.</p></div><div className="mt-10 space-y-4 border-t border-white/10 pt-7"><p className="flex items-center gap-3 text-sm text-slate-300"><Sun size={17} className="text-green-300" /> Share surplus solar power</p><p className="flex items-center gap-3 text-sm text-slate-300"><Leaf size={17} className="text-green-300" /> Support local clean energy</p></div></section>
-        <section className="p-6 sm:p-9 lg:p-10"><p className="eyebrow">Join SolarShare</p><h2 className="mt-2 font-heading text-3xl font-semibold tracking-tight text-slate-950">Create your account</h2><p className="mt-2 text-sm leading-6 text-slate-500">Start with your details, then select the workspace you need.</p><form onSubmit={handleSubmit} className="mt-7 space-y-5"><div className="grid gap-5 sm:grid-cols-2"><label><span className="field-label">Full name</span><div className="relative"><UserRound size={16} className="pointer-events-none absolute left-3.5 top-[19px] text-slate-400" /><input required value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} className="input-field pl-9" placeholder="Your name" /></div></label><label><span className="field-label">City</span><div className="relative"><Building2 size={16} className="pointer-events-none absolute left-3.5 top-[19px] text-slate-400" /><input required value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })} className="input-field pl-9" placeholder="Your city" /></div></label></div><div className="grid gap-5 sm:grid-cols-2"><label><span className="field-label">Email address</span><input type="email" required value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} className="input-field" placeholder="you@example.com" /></label><label><span className="field-label">Password</span><input type="password" required minLength={6} value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} className="input-field" placeholder="At least 6 characters" /></label></div><fieldset><legend className="field-label">How will you use SolarShare?</legend><div className="mt-2.5 grid gap-2.5">{ROLES.map((role) => { const Icon = role.icon; const selected = form.role === role.value; return <label key={role.value} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition ${selected ? "border-primary bg-green-50/70 ring-1 ring-primary" : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"}`}><input type="radio" name="role" value={role.value} checked={selected} onChange={(event) => setForm({ ...form, role: event.target.value })} className="sr-only" /><span className={`grid h-9 w-9 place-items-center rounded-lg ${selected ? "bg-primary text-white" : "bg-slate-100 text-slate-600"}`}><Icon size={17} /></span><span><span className="block text-sm font-semibold text-slate-800">{role.label}</span><span className="mt-0.5 block text-xs text-slate-500">{role.desc}</span></span></label>; })}</div></fieldset>{form.role === "prosumer" && <label className="block"><span className="field-label">Solar-panel capacity (kW)</span><input type="number" min="0.1" step="0.1" required value={form.capacityKw} onChange={(event) => setForm({ ...form, capacityKw: event.target.value })} className="input-field" placeholder="e.g. 3" /></label>}{form.role === "admin" && <label className="block"><span className="field-label">Admin registration code</span><input type="password" required value={form.adminCode} onChange={(event) => setForm({ ...form, adminCode: event.target.value })} className="input-field" placeholder="Enter the secure code" /></label>}{error && <p className="rounded-xl border border-red-100 bg-red-50 px-3.5 py-3 text-sm text-red-700">{error}</p>}<button type="submit" disabled={submitting} className="btn-primary w-full py-3">{submitting ? "Creating account…" : <>Create account <ArrowRight size={17} /></>}</button></form><p className="mt-6 text-center text-sm text-slate-500">Already a member? <Link to="/login" className="font-semibold text-primary hover:text-green-800">Log in</Link></p></section></div></div></div>
-  );
-};
+  /* ─── STEP 1: Role Picker ─────────────────────────── */
+  if (step === 1) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          {/* Back to home */}
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 mb-6 transition-colors"
+          >
+            <ArrowLeft size={14} /> Back to Home
+          </Link>
 
-export default Register;
+          <div className="rounded-3xl bg-white shadow-xl shadow-slate-200/60 border border-slate-100 px-8 py-10">
+            {/* Logo */}
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/20">
+                <Sun size={32} className="fill-white animate-spin-slow" />
+              </div>
+              <h1 className="mt-5 font-heading text-2xl font-extrabold tracking-tight text-slate-900">
+                Choose Your Role
+              </h1>
+              <p className="mt-2 text-sm font-semibold text-slate-400">
+                Select how you want to use SolarShare
+              </p>
+            </div>
+
+            {/* Role Cards */}
+            <div className="mt-8 space-y-3">
+              {ROLES.map(({ value, label, desc, icon: Icon }) => {
+                const selected = form.role === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => handleRoleSelect(value)}
+                    className={`w-full flex items-center gap-4 rounded-2xl border px-5 py-4 text-left transition-all ${
+                      selected
+                        ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/20"
+                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors ${
+                        selected
+                          ? "border-emerald-200 bg-emerald-100 text-emerald-700"
+                          : "border-slate-200 bg-slate-50 text-slate-500"
+                      }`}
+                    >
+                      <Icon size={20} />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-bold text-slate-900">{label}</span>
+                      <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">{desc}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Error */}
+            {error && (
+              <p className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700">
+                {error}
+              </p>
+            )}
+
+            {/* Continue Button */}
+            <button
+              type="button"
+              onClick={handleContinue}
+              className={`mt-6 w-full rounded-xl py-4 text-sm font-bold text-white transition ${
+                form.role
+                  ? "bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-600/10"
+                  : "bg-emerald-300 cursor-not-allowed"
+              }`}
+            >
+              {form.role
+                ? `Continue as ${ROLES.find((r) => r.value === form.role)?.label} →`
+                : "Continue as ..."}
+            </button>
+
+            <p className="mt-6 text-center text-xs font-semibold text-slate-500">
+              Already have an account?{" "}
+              <Link to="/login" className="text-emerald-600 hover:text-emerald-700 transition">
+                Sign in
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── STEP 2: Details Form ────────────────────────── */
+  const selectedRole = ROLES.find((r) => r.value === form.role);
+  const RoleIcon = selectedRole?.icon;
+
+  return (
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        {/* Back to role picker */}
+        <button
+          type="button"
+          onClick={() => { setStep(1); setError(""); }}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 mb-6 transition-colors"
+        >
+          <ArrowLeft size={14} /> Back to Role Selection
+        </button>
+
+        <div className="rounded-3xl bg-white shadow-xl shadow-slate-200/60 border border-slate-100 px-8 py-10">
+          {/* Role Badge */}
+          <div className="flex items-center gap-3 rounded-2xl bg-emerald-50 border border-emerald-100 px-4 py-3 mb-6">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white">
+              {RoleIcon && <RoleIcon size={18} className="fill-white/10" />}
+            </span>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+                Registering as
+              </p>
+              <p className="text-sm font-extrabold text-slate-900">{selectedRole?.label}</p>
+            </div>
+          </div>
+
+          <h2 className="font-heading text-2xl font-extrabold tracking-tight text-slate-900">
+            Create your account
+          </h2>
+          <p className="mt-1 text-sm font-semibold text-slate-400">
+            Fill in your details to get started.
+          </p>
+
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            {/* Name + City */}
+            <div className="grid grid-cols-2 gap-4">
+              <label className="block">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Full Name</span>
+                <div className="relative mt-2">
+                  <User size={15} className="absolute left-3 top-[14px] text-slate-400 pointer-events-none" />
+                  <input
+                    required
+                    placeholder="Your name"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 focus:outline-none"
+                  />
+                </div>
+              </label>
+              <label className="block">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">City</span>
+                <div className="relative mt-2">
+                  <Building2 size={15} className="absolute left-3 top-[14px] text-slate-400 pointer-events-none" />
+                  <input
+                    required
+                    placeholder="Your city"
+                    value={form.city}
+                    onChange={(e) => setForm({ ...form, city: e.target.value })}
+                    className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 focus:outline-none"
+                  />
+                </div>
+              </label>
+            </div>
+
+            {/* Email */}
+            <label className="block">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address</span>
+              <input
+                type="email"
+                required
+                placeholder="you@example.com"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="mt-2 w-full rounded-xl border border-slate-200 bg-white py-3 px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 focus:outline-none"
+              />
+            </label>
+
+            {/* Password */}
+            <label className="block">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Password</span>
+              <div className="relative mt-2">
+                <Lock size={15} className="absolute left-3 top-[14px] text-slate-400 pointer-events-none" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={6}
+                  placeholder="At least 6 characters"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-9 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-[13px] text-slate-400 hover:text-slate-600 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </div>
+            </label>
+
+            {/* Prosumer-only: panel capacity */}
+            {form.role === "prosumer" && (
+              <label className="block">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Solar Panel Capacity (kW)</span>
+                <input
+                  type="number"
+                  min="0.1"
+                  step="0.1"
+                  required
+                  value={form.capacityKw}
+                  onChange={(e) => setForm({ ...form, capacityKw: e.target.value })}
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white py-3 px-4 text-sm text-slate-900 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 focus:outline-none"
+                  placeholder="e.g. 3"
+                />
+              </label>
+            )}
+
+            {/* Admin-only: secret code */}
+            {form.role === "admin" && (
+              <label className="block">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admin Registration Code</span>
+                <input
+                  type="password"
+                  required
+                  value={form.adminCode}
+                  onChange={(e) => setForm({ ...form, adminCode: e.target.value })}
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white py-3 px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 focus:outline-none"
+                  placeholder="Enter the secure code"
+                />
+              </label>
+            )}
+
+            {/* Error */}
+            {error && (
+              <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="mt-2 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white shadow-md shadow-emerald-600/10 hover:bg-emerald-700 transition disabled:opacity-60"
+            >
+              {submitting ? "Creating account…" : <> Create Account <ArrowRight size={16} /> </>}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-xs font-semibold text-slate-500">
+            Already have an account?{" "}
+            <Link to="/login" className="text-emerald-600 hover:text-emerald-700 transition">
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
