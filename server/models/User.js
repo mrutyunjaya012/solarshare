@@ -27,7 +27,9 @@ const userSchema = new mongoose.Schema(
     walletBalance: { type: Number, default: 0 },
     carbonCreditsTotal: { type: Number, default: 0 },
     isVerified: { type: Boolean, default: false },
+    isBlocked: { type: Boolean, default: false },
     kycDocumentUrl: { type: String },
+
   },
   { timestamps: true }
 );
