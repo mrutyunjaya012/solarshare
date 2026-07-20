@@ -5,6 +5,10 @@ import Register from "./pages/auth/Register.jsx";
 import ProsumerDashboard from "./pages/prosumer/ProsumerDashboard.jsx";
 import ConsumerDashboard from "./pages/consumer/ConsumerDashboard.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
+import AdminUsers from "./pages/admin/AdminUsers.jsx";
+import AdminListings from "./pages/admin/AdminListings.jsx";
+import AdminTransactions from "./pages/admin/AdminTransactions.jsx";
+import AdminMeters from "./pages/admin/AdminMeters.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Marketplace from "./pages/shared/Marketplace.jsx";
 import WalletPage from "./pages/shared/WalletPage.jsx";
@@ -40,14 +44,11 @@ function App() {
       />
       <Route path="/consumer/transactions" element={<ProtectedRoute allowedRoles={["consumer"]}><TransactionsPage /></ProtectedRoute>} />
       <Route path="/consumer/wallet" element={<ProtectedRoute allowedRoles={["consumer"]}><WalletPage /></ProtectedRoute>} />
-      <Route
-        path="/admin/*"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/admin"              element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+      <Route path="/admin/users"        element={<ProtectedRoute allowedRoles={["admin"]}><AdminUsers /></ProtectedRoute>} />
+      <Route path="/admin/listings"     element={<ProtectedRoute allowedRoles={["admin"]}><AdminListings /></ProtectedRoute>} />
+      <Route path="/admin/transactions" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTransactions /></ProtectedRoute>} />
+      <Route path="/admin/meters"       element={<ProtectedRoute allowedRoles={["admin"]}><AdminMeters /></ProtectedRoute>} />
     </Routes>
   );
 }

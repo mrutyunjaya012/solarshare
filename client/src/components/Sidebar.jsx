@@ -1,13 +1,18 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import {
+  ArrowLeftRight,
   BarChart3,
   LayoutDashboard,
   Leaf,
+  ListChecks,
   LogOut,
   ShoppingBag,
+  Users,
   WalletCards,
   X,
+  Zap,
 } from "lucide-react";
+
 import { useAuth } from "../context/AuthContext.jsx";
 
 const MENUS = {
@@ -25,8 +30,13 @@ const MENUS = {
     { label: "Wallet", path: "/consumer/wallet", icon: WalletCards },
   ],
   admin: [
-    { label: "Overview", path: "/admin", icon: LayoutDashboard, end: true },
+    { label: "Overview",      path: "/admin",                icon: LayoutDashboard, end: true },
+    { label: "Users",         path: "/admin/users",          icon: Users },
+    { label: "Listings",      path: "/admin/listings",       icon: ListChecks },
+    { label: "Transactions",  path: "/admin/transactions",   icon: ArrowLeftRight },
+    { label: "Smart Meters",  path: "/admin/meters",         icon: Zap },
   ],
+
 };
 
 const Sidebar = ({ isOpen = false, onClose = () => {} }) => {
