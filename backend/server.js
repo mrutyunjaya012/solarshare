@@ -16,6 +16,12 @@ import meterRoutes from "./routes/meterRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
 import walletRoutes from "./routes/walletRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import matchRoutes from "./routes/matchRoutes.js";
+import pricingRoutes from "./routes/pricingRoutes.js";
+import carbonRoutes from "./routes/carbonRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import disputeRoutes from "./routes/disputeRoutes.js";
+import reportRoutes from "./routes/reportRoutes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, ".env") });
@@ -42,6 +48,12 @@ app.use("/api/meter", meterRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/match", matchRoutes);
+app.use("/api/pricing", pricingRoutes);
+app.use("/api/carbon", carbonRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/disputes", disputeRoutes);
+app.use("/api/reports", reportRoutes);
 
 // Central error handler
 app.use((err, req, res, next) => {

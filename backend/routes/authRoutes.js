@@ -1,5 +1,13 @@
 import express from "express";
-import { registerUser, loginUser, logoutUser, getMe, updateProfile } from "../controllers/authController.js";
+import {
+  registerUser,
+  loginUser,
+  logoutUser,
+  getMe,
+  updateProfile,
+  changePassword,
+  submitKyc,
+} from "../controllers/authController.js";
 import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -9,5 +17,7 @@ router.post("/login", loginUser);
 router.post("/logout", logoutUser);
 router.get("/me", protect, getMe);
 router.patch("/profile", protect, updateProfile);
+router.post("/change-password", protect, changePassword);
+router.post("/kyc", protect, submitKyc);
 
 export default router;

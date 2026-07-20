@@ -65,7 +65,11 @@ frontend/
 - **Auth**: register/login/logout with JWT (httpOnly cookie), role selection
   (prosumer/consumer/admin), protected routes on both sides
 - **Smart meter simulator**: background job writing generation/consumption readings
-- **Listings**: create/browse/filter marketplace CRUD
-- **Transactions + wallets**: purchase flow, top-up, carbon credits on sale
-- **Admin**: users, listings, transactions, meter overview
-- **Matching engine**: weighted-score ranking (service ready to wire to an endpoint)
+- **Listings**: full marketplace CRUD (create/browse/update/cancel + stats)
+- **Matching + pricing**: ranked seller match and dynamic ₹/kWh suggestions
+- **Transactions + wallets**: purchase, disputes, top-up/withdraw, history
+- **Carbon credits**: ledger, summary, and certificate metadata
+- **Notifications, disputes, reports**: in-app alerts, dispute queue, impact reports
+- **Admin**: users, listings, transactions, meters, disputes, carbon overview
+
+**API surface:** 56 REST endpoints under `/api/*` (see `backend/routes/`).

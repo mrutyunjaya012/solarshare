@@ -2,7 +2,10 @@ import Listing from "../models/Listing.js";
 import Transaction from "../models/Transaction.js";
 import CarbonCredit from "../models/CarbonCredit.js";
 import Wallet from "../models/Wallet.js";
+import Dispute from "../models/Dispute.js";
+import User from "../models/User.js";
 import { applyWalletEntry } from "./walletController.js";
+import { createNotification } from "../utils/notify.js";
 
 const PLATFORM_FEE_RATE = 0.02; // 2%
 const TAX_RATE = 0.05; // 5%
@@ -75,9 +78,25 @@ export const purchaseEnergy = async (req, res, next) => {
       creditsEarned,
       transaction: transaction._id,
     });
+    await User.findByIdAndUpdate(listing.seller, { $inc: { carbonCreditsTotal: creditsEarned } });
+
+    await createNotification({
+      user: listing.seller,
+      type: "listing_sold",
+      title: "Energy sold",
+      message: `${kwh} kWh sold from your listing for ₹${subtotal.toFixed(2)}.`,
+      relatedId: transaction._id,
+    });
+    await createNotification({
+      user: req.user._id,
+      type: "purchase",
+      title: "Purchase complete",
+      message: `You purchased ${kwh} kWh for ₹${totalAmount.toFixed(2)}.`,
+      relatedId: transaction._id,
+    });
 
     const io = req.app.get("io");
-    io.to(String(listing.seller)).emit("notification", {
+    io?.to(String(listing.seller)).emit("notification", {
       type: "listing_sold",
       message: `${kwh} kWh sold from your listing`,
     });
@@ -97,6 +116,97 @@ export const getMyTransactions = async (req, res, next) => {
       .populate("seller", "name")
       .sort({ createdAt: -1 });
     res.json(transactions);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @route GET /api/transactions/stats
+export const getTransactionStats = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const [bought, sold] = await Promise.all([
+      Transaction.aggregate([
+        { $match: { buyer: userId, status: "completed" } },
+        { $group: { _id: null, kwh: { $sum: "$kwh" }, amount: { $sum: "$totalAmount" }, count: { $sum: 1 } } },
+      ]),
+      Transaction.aggregate([
+        { $match: { seller: userId, status: "completed" } },
+        { $group: { _id: null, kwh: { $sum: "$kwh" }, amount: { $sum: "$totalAmount" }, count: { $sum: 1 } } },
+      ]),
+    ]);
+    res.json({
+      purchased: { kwh: bought[0]?.kwh || 0, amount: bought[0]?.amount || 0, count: bought[0]?.count || 0 },
+      sold: { kwh: sold[0]?.kwh || 0, amount: sold[0]?.amount || 0, count: sold[0]?.count || 0 },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @route GET /api/transactions/:id
+export const getTransactionById = async (req, res, next) => {
+  try {
+    const tx = await Transaction.findById(req.params.id)
+      .populate("buyer", "name email")
+      .populate("seller", "name email")
+      .populate("listing");
+    if (!tx) return res.status(404).json({ message: "Transaction not found" });
+
+    const uid = String(req.user._id);
+    const allowed =
+      req.user.role === "admin" ||
+      String(tx.buyer._id) === uid ||
+      String(tx.seller._id) === uid;
+    if (!allowed) return res.status(403).json({ message: "Not allowed to view this transaction" });
+
+    res.json(tx);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @route POST /api/transactions/:id/dispute
+export const openDispute = async (req, res, next) => {
+  try {
+    const { reason, evidenceUrls } = req.body;
+    if (!reason?.trim()) return res.status(400).json({ message: "Dispute reason is required" });
+
+    const tx = await Transaction.findById(req.params.id);
+    if (!tx) return res.status(404).json({ message: "Transaction not found" });
+
+    const uid = String(req.user._id);
+    if (String(tx.buyer) !== uid && String(tx.seller) !== uid) {
+      return res.status(403).json({ message: "Only buyer or seller can open a dispute" });
+    }
+    if (!["completed", "pending"].includes(tx.status)) {
+      return res.status(400).json({ message: `Cannot dispute a ${tx.status} transaction` });
+    }
+
+    const existing = await Dispute.findOne({ transaction: tx._id, status: { $in: ["open", "under_review"] } });
+    if (existing) return res.status(409).json({ message: "An open dispute already exists for this transaction" });
+
+    const against = String(tx.buyer) === uid ? tx.seller : tx.buyer;
+    const dispute = await Dispute.create({
+      transaction: tx._id,
+      raisedBy: req.user._id,
+      against,
+      reason: reason.trim(),
+      evidenceUrls: Array.isArray(evidenceUrls) ? evidenceUrls : [],
+    });
+
+    tx.status = "disputed";
+    await tx.save();
+
+    await createNotification({
+      user: against,
+      type: "dispute",
+      title: "Dispute opened",
+      message: `A dispute was opened on transaction ${tx._id}.`,
+      relatedId: dispute._id,
+    });
+
+    res.status(201).json(dispute);
   } catch (err) {
     next(err);
   }

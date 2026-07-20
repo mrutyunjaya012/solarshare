@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import Wallet from "../models/Wallet.js";
 import generateToken from "../utils/generateToken.js";
+import { createNotification } from "../utils/notify.js";
 
 const cookieOptions = {
   httpOnly: true,
@@ -123,6 +124,61 @@ export const updateProfile = async (req, res, next) => {
     }
     await user.save();
     res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @route POST /api/auth/change-password
+export const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Current and new password are required" });
+    }
+    if (String(newPassword).length < 6) {
+      return res.status(400).json({ message: "New password must be at least 6 characters" });
+    }
+
+    const user = await User.findById(req.user._id).select("+password");
+    if (!user || !(await user.matchPassword(currentPassword))) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+    user.password = newPassword;
+    await user.save();
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @route POST /api/auth/kyc
+export const submitKyc = async (req, res, next) => {
+  try {
+    const { kycDocumentUrl } = req.body;
+    if (!kycDocumentUrl || !String(kycDocumentUrl).trim()) {
+      return res.status(400).json({ message: "kycDocumentUrl is required" });
+    }
+    const user = req.user;
+    user.kycDocumentUrl = String(kycDocumentUrl).trim();
+    user.isVerified = false; // pending admin verification
+    await user.save();
+
+    await createNotification({
+      user: user._id,
+      type: "kyc",
+      title: "KYC submitted",
+      message: "Your KYC document was received and is pending review.",
+    });
+
+    res.json({
+      message: "KYC submitted for review",
+      user: {
+        id: user._id,
+        kycDocumentUrl: user.kycDocumentUrl,
+        isVerified: user.isVerified,
+      },
+    });
   } catch (err) {
     next(err);
   }
