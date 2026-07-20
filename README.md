@@ -30,11 +30,11 @@ npm run dev
 ```
 Or separately:
 ```bash
-npm run dev:backend    # http://localhost:5001
+npm run dev:backend    # http://localhost:5002
 npm run dev:frontend   # http://localhost:5173
 ```
 
-Vite proxies `/api` to `http://localhost:5001` (same as `PORT` in `backend/.env`).
+Vite proxies `/api` to `http://localhost:5002` (same as `PORT` in `backend/.env`).
 
 ### Try it
 1. Open the frontend URL and register as a prosumer
