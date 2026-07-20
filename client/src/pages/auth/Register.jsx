@@ -67,8 +67,11 @@ export default function Register() {
       const user = await register(form);
       navigate(roleHome[user.role] || "/");
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed. Please try again.");
-      setStep(1); // bring back to form on server error
+      const msg = err.response?.data?.message || "Registration failed. Please try again.";
+      setError(msg);
+      // Only go back to Step 1 for non-role/non-admin errors (e.g. email already exists)
+      const isRoleError = msg.toLowerCase().includes("admin") || msg.toLowerCase().includes("code");
+      if (!isRoleError) setStep(1);
     } finally {
       setSubmitting(false);
     }
